@@ -1,0 +1,49 @@
+QueueStorm Investigator - Request Workflow
+==========================================
+
+When a client sends a JSON POST request to the `/analyze-ticket` endpoint, the system follows a structured pipeline to ensure accuracy, reliability, and absolute safety.
+
+Here is the step-by-step workflow:
+
+1. Incoming Request (Express.js)
+--------------------------------
+The request is received by the Express application defined in `api/index.js`. It first passes through Express's built-in JSON parser. If the JSON is malformed, a clean 400 Bad Request error is returned without leaking stack traces.
+
+2. Schema Validation (utils.js)
+-------------------------------
+The request body is passed to `validateRequestSchema()`.
+- It verifies that `ticket_id` and `complaint` are present, are valid strings, and are not empty.
+- If `transaction_history` is provided, it iterates through every transaction to ensure all required fields (like `transaction_id`, `amount`, `timestamp`) exist and have the correct data types.
+- If validation fails, the API immediately halts and returns a 400 or 422 HTTP status code with the exact error details.
+
+3. Investigation Routing (investigator.js)
+------------------------------------------
+Once validated, the payload is passed to the core `investigateTicket()` function. This function acts as a smart router to determine how to process the text.
+
+4. Primary LLM Analysis - Gemini
+--------------------------------
+The system first checks for a valid Google Gemini API key (`GEMINI_API_KEY`).
+- If found, it constructs a hardened prompt using `SYSTEM_INSTRUCTION` (from `src/prompt.js`), instructing the LLM to ignore prompt injections and format its response purely as JSON.
+- It makes a low-temperature (highly deterministic) call to `gemini-1.5-flash`.
+- If successful, the raw JSON result is moved to the sanitization phase.
+
+5. Secondary LLM Fallback - OpenAI
+----------------------------------
+If the Gemini key is missing, or if the API call fails (e.g., rate limits or network issues), the system automatically falls back to OpenAI (`OPENAI_API_KEY`) using the `gpt-4o-mini` model, maintaining the exact same strict system instructions.
+
+6. Local Heuristics Fallback (rules.js)
+---------------------------------------
+If both cloud LLMs fail, or if no API keys are provided, the system executes a "circuit breaker" local fallback (`fallbackInvestigate`).
+- This engine uses pure Regular Expressions and keyword matching (including Bengali and English variants) to classify the intent, extract transaction IDs, and formulate a safe response locally, ensuring 100% uptime.
+
+7. Safety Firewall & Sanitization (utils.js)
+--------------------------------------------
+Before the result (from either LLM or the local rules engine) is sent back to the user, it MUST pass through `sanitizeResponse()`. This is our defense-in-depth against prompt injection or AI hallucinations.
+- Missing Fields: It injects safe default values for any missing JSON keys.
+- Credential Safety: If the output asks for a PIN, OTP, or password, it overrides the text with a security warning.
+- Financial Authority: If the output unauthorizedly promises a refund or reversal, it replaces it with safe, non-committal language ("eligible amounts will be returned through official channels").
+- Phishing Protection: Any unofficial third-party links or phone numbers are stripped out.
+
+8. Final Response
+-----------------
+The perfectly structured and sanitized JSON object is returned back to `api/index.js`, which responds to the client with an HTTP 200 OK status containing the secure payload.
