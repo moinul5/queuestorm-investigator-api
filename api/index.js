@@ -49,9 +49,15 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Local runner - start server if not deployed as a Vercel serverless function
+// Start the server only when this file is the direct entry point (not when imported).
+// This prevents the port conflict when test-runner.js imports the app to start its own server.
 const isVercel = process.env.VERCEL || process.env.NOW_BUILDER;
-if (!isVercel) {
+const isDirectRun = process.argv[1] && (
+  process.argv[1].includes('api/index.js') ||
+  process.argv[1].includes('api\\index.js')
+);
+
+if (!isVercel && isDirectRun) {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`[QueueStorm Investigator] Local server running on http://localhost:${PORT}`);
