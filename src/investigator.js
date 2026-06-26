@@ -244,7 +244,7 @@ export async function investigateTicket(body) {
   }
 
   const geminiKey = process.env.GEMINI_API_KEY;
-  const openaiKey = process.env.OPENAI_API_KEY;
+  const openaiKey = process.env.GROK_API_KEY;
 
   let llmHints = null;
 
@@ -261,7 +261,7 @@ export async function investigateTicket(body) {
   }
 
   // Try OpenAI if Gemini failed or unavailable
-  if (!llmHints && openaiKey && openaiKey !== 'your_openai_api_key_here') {
+  if (!llmHints && openaiKey && openaiKey !== 'your_GROK_API_KEY_here') {
     try {
       const raw = await callOpenAIHints(body, openaiKey);
       llmHints = sanitizeHints(raw);

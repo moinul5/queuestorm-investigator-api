@@ -47,6 +47,7 @@ queuestorm-investigator/
 ## 🚀 Setup & Local Run
 
 ### Prerequisites
+
 - Node.js ≥ 18
 
 ### 1 — Install
@@ -66,7 +67,7 @@ Edit `.env`:
 ```
 PORT=3000
 GEMINI_API_KEY=your_gemini_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here
+GROK_API_KEY=your_GROK_API_KEY_here
 ```
 
 Both keys are **optional**. The service runs fully offline with the local rule-based engine if no keys are set.
@@ -116,15 +117,15 @@ node test-runner.js
 
 Runs **16 tests** and reports pass / fail for each:
 
-| # | What is tested |
-|---|----------------|
-| 1 | `GET /health` returns `{"status":"ok"}` |
-| 2–11 | All 10 public sample cases from `SUST_Preli_Sample_Cases.json` |
-| 12 | Prompt injection — safe blocking, no refund promise, no credential request |
-| 13 | Banglish wrong-transfer (`ami vul number e taka pathay`) |
-| 14 | Merchant settlement complaint → not classified as `wrong_transfer` |
-| 15 | Refund request with empty transaction history → `null` txn + `insufficient_data` |
-| 16 | Two payments same amount but **different** merchants → not `duplicate_payment` |
+| #    | What is tested                                                                   |
+| ---- | -------------------------------------------------------------------------------- |
+| 1    | `GET /health` returns `{"status":"ok"}`                                          |
+| 2–11 | All 10 public sample cases from `SUST_Preli_Sample_Cases.json`                   |
+| 12   | Prompt injection — safe blocking, no refund promise, no credential request       |
+| 13   | Banglish wrong-transfer (`ami vul number e taka pathay`)                         |
+| 14   | Merchant settlement complaint → not classified as `wrong_transfer`               |
+| 15   | Refund request with empty transaction history → `null` txn + `insufficient_data` |
+| 16   | Two payments same amount but **different** merchants → not `duplicate_payment`   |
 
 Each test validates: all 12 required fields present, no extra fields, enum validity, `ticket_id` round-trip, `confidence` in `[0,1]`, `reason_codes` is array, no credential solicitation, no unauthorized refund promise.
 
@@ -226,7 +227,7 @@ Non-official URLs and external phone numbers are replaced with `"our official su
 **Response `200 OK`:**
 
 ```json
-{"status": "ok"}
+{ "status": "ok" }
 ```
 
 ### POST /analyze-ticket
@@ -278,19 +279,19 @@ Non-official URLs and external phone numbers are replaced with `"our official su
 
 **Allowed enums:**
 
-| Field | Values |
-|-------|--------|
-| `evidence_verdict` | `consistent` · `inconsistent` · `insufficient_data` |
-| `case_type` | `wrong_transfer` · `payment_failed` · `refund_request` · `duplicate_payment` · `merchant_settlement_delay` · `agent_cash_in_issue` · `phishing_or_social_engineering` · `other` |
-| `severity` | `low` · `medium` · `high` · `critical` |
-| `department` | `customer_support` · `dispute_resolution` · `payments_ops` · `merchant_operations` · `agent_operations` · `fraud_risk` |
+| Field              | Values                                                                                                                                                                          |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `evidence_verdict` | `consistent` · `inconsistent` · `insufficient_data`                                                                                                                             |
+| `case_type`        | `wrong_transfer` · `payment_failed` · `refund_request` · `duplicate_payment` · `merchant_settlement_delay` · `agent_cash_in_issue` · `phishing_or_social_engineering` · `other` |
+| `severity`         | `low` · `medium` · `high` · `critical`                                                                                                                                          |
+| `department`       | `customer_support` · `dispute_resolution` · `payments_ops` · `merchant_operations` · `agent_operations` · `fraud_risk`                                                          |
 
 **Error responses:**
 
-| Code | Cause |
-|------|-------|
-| `400` | Malformed JSON or missing required field |
-| `422` | Invalid field type or empty required field |
+| Code  | Cause                                             |
+| ----- | ------------------------------------------------- |
+| `400` | Malformed JSON or missing required field          |
+| `422` | Invalid field type or empty required field        |
 | `500` | Internal error — no stack trace or secret exposed |
 
 ---
@@ -315,10 +316,10 @@ Or connect the GitHub repository to your Vercel Dashboard for automatic Git depl
 
 Go to your Vercel project → **Settings** → **Environment Variables**:
 
-| Variable | Required | Notes |
-|----------|----------|-------|
-| `GEMINI_API_KEY` | No | Enables Gemini 1.5 Flash for hint extraction |
-| `OPENAI_API_KEY` | No | Fallback if Gemini is unavailable |
+| Variable         | Required | Notes                                        |
+| ---------------- | -------- | -------------------------------------------- |
+| `GEMINI_API_KEY` | No       | Enables Gemini 1.5 Flash for hint extraction |
+| `GROK_API_KEY`   | No       | Fallback if Gemini is unavailable            |
 
 If neither key is set, the service uses the local rules engine and still returns valid results.
 
@@ -337,17 +338,17 @@ curl -X POST https://your-vercel-url.vercel.app/analyze-ticket \
 
 ## 📋 Runbook
 
-| Step | Command |
-|------|---------|
-| Install | `npm install` |
-| Configure | `cp .env.example .env` then add API keys |
-| Run locally | `npm run dev` |
-| Health check | `curl http://localhost:3000/health` |
-| Run test suite | `node test-runner.js` |
-| Deploy | `vercel` |
-| Set env vars | Vercel Dashboard → Settings → Environment Variables |
-| Verify live | `curl https://your-vercel-url.vercel.app/health` |
-| View logs | Vercel Dashboard → Functions → Logs |
+| Step           | Command                                             |
+| -------------- | --------------------------------------------------- |
+| Install        | `npm install`                                       |
+| Configure      | `cp .env.example .env` then add API keys            |
+| Run locally    | `npm run dev`                                       |
+| Health check   | `curl http://localhost:3000/health`                 |
+| Run test suite | `node test-runner.js`                               |
+| Deploy         | `vercel`                                            |
+| Set env vars   | Vercel Dashboard → Settings → Environment Variables |
+| Verify live    | `curl https://your-vercel-url.vercel.app/health`    |
+| View logs      | Vercel Dashboard → Functions → Logs                 |
 
 ---
 
