@@ -29,7 +29,7 @@ The system first checks for a valid Google Gemini API key (`GEMINI_API_KEY`).
 
 5. Secondary LLM Fallback - OpenAI
 ----------------------------------
-If the Gemini key is missing, or if the API call fails (e.g., rate limits or network issues), the system automatically falls back to OpenAI (`OPENAI_API_KEY`) using the `gpt-4o-mini` model, maintaining the exact same strict system instructions.
+If the Gemini key is missing, or if the API call fails (e.g., rate limits or network issues), the system automatically falls back to OpenAI (`GROK_API_KEY`) using the `gpt-4o-mini` model, maintaining the exact same strict system instructions.
 
 6. Local Heuristics Fallback (rules.js)
 ---------------------------------------
